@@ -46,6 +46,15 @@ CustomerStatus:
   - deleted
 ```
 
+### FavoriteSport
+
+```yaml
+FavoriteSport:
+  - running
+  - training
+  - football
+```
+
 ### IdentityType
 
 ```yaml
@@ -129,7 +138,7 @@ Customer:
   country_code: string
   city: string|null
   favorite_sports:
-    - string
+    - FavoriteSport
   size_profile:
     shoe:
       uk: string|null
@@ -141,6 +150,11 @@ Customer:
       bottom: string|null
       source: string|null
   lifecycle_status: string
+  last_activity:
+    type: string|null
+    channel: string|null
+    occurred_at: datetime|null
+    source_ref: uuid|string|null
   annual_spend:
     amount: decimal_string
     currency: string
@@ -161,6 +175,9 @@ Customer:
 
 - `preferred_locale` обязателен и по умолчанию равен `ru`, если клиент не выбрал язык;
 - минимум одна активная identity требуется для использования клиента в маркетинговых сценариях;
+- `favorite_sports` хранит значения `FavoriteSport`; неизвестные или будущие виды спорта фиксируются в `metadata` связанных событий/профильных атрибутов до расширения enum;
+- `size_profile` хранит предпочтительные размеры клиента, а не остатки каталога или размерную сетку товара;
+- `last_activity` обновляется Customer 360 по canonical событиям и не заменяет историю `Transaction`, `Cart` или `MessageDelivery`;
 - `birth_date` может использоваться для триггера дня рождения только при наличии consent на соответствующий канал;
 - `primary_phone_e164` и `primary_email_normalized` не являются глобальными primary key.
 
@@ -190,7 +207,9 @@ CustomerIdentity:
 Инварианты:
 
 - активная пара `type + normalized_value + tenant_id` уникальна;
+- `normalized_value` и `value` считаются PII или sensitive identity values для `phone`, `email`, `wallet_card`, `wallet_barcode`, `device`, `messenger_contact` и не возвращаются наружу без permission `customer.pii.read`;
 - при merge старые identity переводятся на survivor `customer_id`;
+- один wallet barcode/card number не может одновременно вести к нескольким активным `Customer`; конфликт создает merge/audit case вместо silent overwrite;
 - device identity без consent не используется для маркетинговых отправок.
 
 ## Consent
@@ -212,6 +231,154 @@ Consent:
   updated_at: datetime
   version: integer
 ```
+
+
+## Customer360Profile
+
+Read model для Headless API Customer 360. Не является отдельной source-of-truth моделью клиента: поля `customer`, `identities`, `purchase_history` и `loyalty_snapshot` собираются из canonical `Customer`, `CustomerIdentity`, `Transaction` и `LoyaltyAccount`.
+
+```yaml
+Customer360Profile:
+  customer:
+    id: uuid
+    status: CustomerStatus
+    first_name: string|null
+    last_name: string|null
+    preferred_locale: Locale
+    favorite_sports:
+      - FavoriteSport
+    size_profile:
+      shoe:
+        uk: string|null
+        us: string|null
+        eu: string|null
+        source: string|null
+      apparel:
+        top: string|null
+        bottom: string|null
+        source: string|null
+    annual_spend:
+      amount: decimal_string
+      currency: string
+      rolling_window_days: integer
+    last_activity:
+      type: string|null
+      channel: string|null
+      occurred_at: datetime|null
+      source_ref: uuid|string|null
+  identities:
+    - CustomerIdentityPublic
+  purchase_history:
+    - CustomerPurchaseHistoryItem
+  loyalty_snapshot:
+    loyalty_account_id: uuid|null
+    tier_code: string|null
+    tier_name: string|null
+    discount_percent: decimal_string|null
+    tier_valid_until: date|null
+    annual_eligible_spend:
+      amount: decimal_string
+      currency: string
+      window_start: date
+      window_end: date
+  wallet:
+    card_number_masked: string|null
+    barcode_masked: string|null
+  generated_at: datetime
+```
+
+Инварианты:
+
+- `loyalty_snapshot` является read-only snapshot из Loyalty; Customer 360 не рассчитывает tier, discount или retention gap;
+- `purchase_history` использует только canonical `Transaction` и не хранит отдельные чеки;
+- публичные identity и wallet значения маскируются, если caller не имеет `customer.pii.read`;
+- `generated_at` фиксирует время сборки проекции и используется потребителями для cache invalidation.
+
+## CustomerIdentityPublic
+
+Безопасная проекция `CustomerIdentity` для Headless API и существующих ЛК/мобильных приложений.
+
+```yaml
+CustomerIdentityPublic:
+  id: uuid
+  type: IdentityType
+  value_masked: string
+  source_system: string
+  is_primary: boolean
+  is_verified: boolean
+  is_active: boolean
+  first_seen_at: datetime
+  last_seen_at: datetime
+```
+
+## CustomerPurchaseHistoryItem
+
+Read projection из `Transaction` для Customer 360 и клиентских каналов.
+
+```yaml
+CustomerPurchaseHistoryItem:
+  transaction_id: uuid
+  type: TransactionType
+  status: string
+  channel: string
+  store_id: uuid|null
+  business_date: date
+  occurred_at: datetime
+  currency: string
+  totals:
+    gross_amount: decimal_string
+    discount_amount: decimal_string
+    loyalty_discount_amount: decimal_string
+    net_amount: decimal_string
+  loyalty:
+    tier_id: uuid|null
+    discount_percent: decimal_string|null
+    evaluation_id: uuid|null
+  lines:
+    - sku: string
+      name: string
+      quantity: decimal_string
+      net_amount: decimal_string
+      product_variant_id: uuid|null
+```
+
+Инварианты:
+
+- элементы истории доступны только владельцу профиля, доверенному headless-клиенту или admin роли с `customer.history.read`;
+- `lines` не содержат supplier cost, margin, internal discount rules или неканонические товарные атрибуты;
+- возвраты и отмены отображаются отдельными элементами с `type = return|cancellation`, а не переписывают исходную покупку.
+
+## OmnichannelIdentityGraph
+
+Read projection для customer/identity. Граф показывает, какими каналами найден один canonical `Customer`, и используется для dedupe/merge audit.
+
+```yaml
+OmnichannelIdentityGraph:
+  customer_id: uuid
+  tenant_id: uuid
+  identities:
+    - CustomerIdentityPublic
+  linked_channels:
+    pos: boolean
+    web: boolean
+    mobile_app: boolean
+    wallet: boolean
+    phone: boolean
+  merge_state:
+    has_conflicts: boolean
+    duplicate_candidates:
+      - customer_id: uuid
+        reason: string
+        confidence: decimal_string
+    survivor_customer_id: uuid|null
+  updated_at: datetime
+```
+
+Инварианты:
+
+- граф не вводит новый идентификатор вместо `customer_id`; Omnichannel ID = canonical `customer_id` плюс активные `CustomerIdentity`;
+- phone и wallet совпадения требуют verified identity или ручного merge-review при конфликте;
+- inactive/merged identities остаются в audit trail, но не используются для POS/e-commerce lookup.
 
 ## Product
 
