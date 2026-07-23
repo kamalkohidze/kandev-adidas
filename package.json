@@ -1,0 +1,15 @@
+{
+  "name": "uco-crm-retail-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Headless UCO CRM scaffold for retail loyalty, marketing, and omnichannel integrations.",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

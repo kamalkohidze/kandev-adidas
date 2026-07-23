@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UCO CRM Admin Scaffold</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>UCO CRM</h1>
+          <p>Headless retail loyalty platform scaffold</p>
+        </div>
+        <span id="health" class="status">Checking</span>
+      </header>
+
+      <section class="layout">
+        <aside class="sidebar">
+          <button class="nav-item active" type="button">Customer 360</button>
+          <button class="nav-item" type="button">Loyalty</button>
+          <button class="nav-item" type="button">Marketing</button>
+          <button class="nav-item" type="button">Integrations</button>
+        </aside>
+
+        <section class="content">
+          <div class="toolbar">
+            <h2>Customer 360</h2>
+            <button id="refresh" type="button">Refresh</button>
+          </div>
+          <div id="profile" class="profile-grid"></div>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
