@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { registerCustomerRoutes } from "../modules/customer/api/routes.js";
 import { registerI18nRoutes } from "../modules/i18n/routes.js";
 import { resolveRequestLocale } from "../modules/i18n/index.js";
+import { registerTransactionRoutes } from "../modules/transactions/api/routes.js";
 import { createJsonResponse, createNotFoundResponse, parseJsonBody } from "./http.js";
 import { moduleRegistry } from "./module-registry.js";
 import { createSeedData } from "./seed-data.js";
@@ -30,7 +31,7 @@ export function createApp() {
     createJsonResponse(200, {
       status: "ok",
       service: "uco-crm-retail-platform",
-      contracts: ["Customer", "CustomerIdentity", "Customer360Profile"],
+      contracts: ["Customer", "CustomerIdentity", "Customer360Profile", "Transaction", "TransactionLine"],
       generated_at: new Date().toISOString()
     })
   );
@@ -42,17 +43,19 @@ export function createApp() {
   );
 
   registerCustomerRoutes(route, appData);
+  registerTransactionRoutes(route, appData);
   registerI18nRoutes(route);
 
   async function handle(method, rawUrl, options = {}) {
     const url = new URL(rawUrl, "http://localhost");
-    const routeMatch = routes.find((candidate) => candidate.method === method && candidate.path === url.pathname);
+    const routeMatch = findRoute(routes, method, url.pathname);
 
     if (routeMatch) {
-      return routeMatch.handler({
+      return routeMatch.route.handler({
         headers: options.headers || {},
         query: url.searchParams,
-        body: options.body ?? null
+        body: options.body ?? null,
+        params: routeMatch.params
       });
     }
 
@@ -78,6 +81,43 @@ export function createApp() {
     handle,
     handleNodeRequest
   };
+}
+
+function findRoute(routes, method, pathname) {
+  const pathnameSegments = splitPath(pathname);
+
+  for (const route of routes) {
+    if (route.method !== method) {
+      continue;
+    }
+
+    const routeSegments = splitPath(route.path);
+    if (routeSegments.length !== pathnameSegments.length) {
+      continue;
+    }
+
+    const params = {};
+    let matched = true;
+
+    for (const [index, segment] of routeSegments.entries()) {
+      if (segment.startsWith(":")) {
+        params[segment.slice(1)] = decodeURIComponent(pathnameSegments[index]);
+      } else if (segment !== pathnameSegments[index]) {
+        matched = false;
+        break;
+      }
+    }
+
+    if (matched) {
+      return { route, params };
+    }
+  }
+
+  return null;
+}
+
+function splitPath(pathname) {
+  return pathname.split("/").filter(Boolean);
 }
 
 async function tryStaticFile(pathname) {

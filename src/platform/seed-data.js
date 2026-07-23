@@ -82,11 +82,20 @@ export const seedData = {
   transactions: [
     {
       id: "33333333-3333-4333-8333-333333333333",
-      customer_id: "11111111-1111-4111-8111-111111111111",
+      tenant_id: "00000000-0000-4000-8000-000000000001",
       type: "purchase",
       status: "completed",
-      channel: "pos",
+      customer_id: "11111111-1111-4111-8111-111111111111",
+      omnichannel_identity: {
+        type: "wallet_barcode",
+        value: "980124000001"
+      },
       store_id: "55555555-5555-4555-8555-555555555555",
+      channel: "pos",
+      source_system: "seed-pos",
+      external_transaction_id: "SEED-RECEIPT-0001",
+      fiscal_receipt_id: "FISCAL-SEED-0001",
+      original_transaction_id: null,
       business_date: "2026-07-15",
       occurred_at: "2026-07-15T18:20:00+05:00",
       currency: "KZT",
@@ -94,8 +103,17 @@ export const seedData = {
         gross_amount: "79990.00",
         discount_amount: "7999.00",
         loyalty_discount_amount: "7999.00",
+        promo_discount_amount: "0.00",
+        tax_amount: "0.00",
         net_amount: "71991.00"
       },
+      payment_methods: [
+        {
+          type: "card",
+          amount: "71991.00",
+          provider_ref: null
+        }
+      ],
       loyalty: {
         tier_id: "66666666-6666-4666-8666-666666666666",
         discount_percent: "10.00",
@@ -103,15 +121,42 @@ export const seedData = {
       },
       lines: [
         {
+          id: "99999999-9999-4999-8999-999999999991",
+          line_number: 1,
+          product_id: null,
+          product_variant_id: "88888888-8888-4888-8888-888888888888",
           sku: "RUN-SHOE-001-UK10",
+          barcode: "4870000000012",
           name: "Football boots",
           quantity: "1",
+          unit_price: {
+            amount: "79990.00",
+            currency: "KZT"
+          },
+          gross_amount: "79990.00",
+          discount_amount: "7999.00",
           net_amount: "71991.00",
-          product_variant_id: "88888888-8888-4888-8888-888888888888"
+          loyalty_eligible_amount: "71991.00",
+          tax_amount: "0.00",
+          applied_discounts: [
+            {
+              type: "loyalty",
+              code: null,
+              amount: "7999.00",
+              stackable: false
+            }
+          ],
+          attributes: {
+            sport_tags: ["football"]
+          }
         }
-      ]
+      ],
+      created_at: "2026-07-15T18:20:00+05:00",
+      updated_at: "2026-07-15T18:20:00+05:00",
+      version: 1
     }
-  ]
+  ],
+  transaction_events: []
 };
 
 export function createSeedData() {
