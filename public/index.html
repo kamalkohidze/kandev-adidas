@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -11,23 +11,30 @@
       <header class="topbar">
         <div>
           <h1>UCO CRM</h1>
-          <p>Headless retail loyalty platform scaffold</p>
+          <p data-i18n="app.subtitle">Headless retail loyalty platform scaffold</p>
         </div>
-        <span id="health" class="status">Checking</span>
+        <div class="topbar-actions">
+          <select id="locale" aria-label="Language">
+            <option value="kk">KZ</option>
+            <option value="ru">RU</option>
+            <option value="en">EN</option>
+          </select>
+          <span id="health" class="status" data-i18n="status.checking">Checking</span>
+        </div>
       </header>
 
       <section class="layout">
         <aside class="sidebar">
-          <button class="nav-item active" type="button">Customer 360</button>
-          <button class="nav-item" type="button">Loyalty</button>
-          <button class="nav-item" type="button">Marketing</button>
-          <button class="nav-item" type="button">Integrations</button>
+          <button class="nav-item active" type="button" data-i18n="nav.customer360">Customer 360</button>
+          <button class="nav-item" type="button" data-i18n="nav.loyalty">Loyalty</button>
+          <button class="nav-item" type="button" data-i18n="nav.marketing">Marketing</button>
+          <button class="nav-item" type="button" data-i18n="nav.integrations">Integrations</button>
         </aside>
 
         <section class="content">
           <div class="toolbar">
-            <h2>Customer 360</h2>
-            <button id="refresh" type="button">Refresh</button>
+            <h2 data-i18n="toolbar.customer360">Customer 360</h2>
+            <button id="refresh" type="button" data-i18n="action.refresh">Refresh</button>
           </div>
           <div id="profile" class="profile-grid"></div>
         </section>
