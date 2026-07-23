@@ -255,37 +255,171 @@ Request использует `Transaction`.
 
 Назначение: профиль клиента, wallet-карта, история покупок, текущая скидка, preferred locale, consent, geofence consent.
 
-### Получить профиль
+### Получить профиль 360
 
 ```http
-GET /api/v1/me/profile
+GET /api/v1/me/profile?include=identities,purchase_history,loyalty_snapshot,wallet
+```
+
+Response использует `Customer360Profile` из `docs/data-contracts.md`. По умолчанию возвращаются профиль, текущая скидка/tier и wallet; история покупок и identity graph подключаются через `include`.
+
+```json
+{
+  "customer": {
+    "id": "uuid",
+    "status": "active",
+    "first_name": "Алибек",
+    "last_name": "Сейдахметов",
+    "preferred_locale": "kk",
+    "favorite_sports": ["football", "running"],
+    "size_profile": {
+      "shoe": {"uk": "10", "us": null, "eu": "44", "source": "profile"},
+      "apparel": {"top": "M", "bottom": null, "source": "profile"}
+    },
+    "annual_spend": {"amount": "450000.00", "currency": "KZT", "rolling_window_days": 365},
+    "last_activity": {
+      "type": "purchase",
+      "channel": "pos",
+      "occurred_at": "2026-07-15T18:20:00+05:00",
+      "source_ref": "uuid"
+    }
+  },
+  "loyalty_snapshot": {
+    "loyalty_account_id": "uuid",
+    "tier_code": "silver",
+    "tier_name": "Silver",
+    "discount_percent": "10.00",
+    "tier_valid_until": "2027-07-23",
+    "annual_eligible_spend": {
+      "amount": "450000.00",
+      "currency": "KZT",
+      "window_start": "2025-07-24",
+      "window_end": "2026-07-23"
+    }
+  },
+  "wallet": {
+    "card_number_masked": "980***",
+    "barcode_masked": "980124******"
+  },
+  "identities": [
+    {
+      "id": "uuid",
+      "type": "phone",
+      "value_masked": "+7701***8320",
+      "source_system": "mobile-app",
+      "is_primary": true,
+      "is_verified": true,
+      "is_active": true,
+      "first_seen_at": "2026-01-10T10:00:00+05:00",
+      "last_seen_at": "2026-07-23T10:00:00+05:00"
+    }
+  ],
+  "purchase_history": [
+    {
+      "transaction_id": "uuid",
+      "type": "purchase",
+      "status": "completed",
+      "channel": "pos",
+      "store_id": "uuid",
+      "business_date": "2026-07-15",
+      "occurred_at": "2026-07-15T18:20:00+05:00",
+      "currency": "KZT",
+      "totals": {
+        "gross_amount": "79990.00",
+        "discount_amount": "7999.00",
+        "loyalty_discount_amount": "7999.00",
+        "net_amount": "71991.00"
+      },
+      "loyalty": {
+        "tier_id": "uuid",
+        "discount_percent": "10.00",
+        "evaluation_id": "uuid"
+      },
+      "lines": [
+        {"sku": "RUN-SHOE-001-UK10", "name": "Бутсы", "quantity": "1", "net_amount": "71991.00", "product_variant_id": "uuid"}
+      ]
+    }
+  ],
+  "generated_at": "2026-07-23T10:00:00+05:00"
+}
+```
+
+Правила безопасности:
+
+- ответ не содержит raw phone, email, barcode, device id и messenger contact без permission `customer.pii.read`;
+- `loyalty_snapshot` передает текущую скидку из Loyalty read model, но этот API не рассчитывает discount;
+- `purchase_history` доступна владельцу профиля или доверенному headless-клиенту со scope `customer.history.read`;
+- `Accept-Language` управляет локализуемыми названиями, но `preferred_locale` остается сохраненным языком коммуникации клиента.
+
+### Обновить retail-профиль
+
+```http
+PATCH /api/v1/me/profile
+```
+
+Request:
+
+```json
+{
+  "preferred_locale": "kk",
+  "favorite_sports": ["football", "running"],
+  "size_profile": {
+    "shoe": {"uk": "10", "eu": "44", "source": "self_reported"},
+    "apparel": {"top": "M", "source": "self_reported"}
+  }
+}
 ```
 
 Response:
 
 ```json
 {
-  "customer": {
-    "id": "uuid",
-    "first_name": "Алибек",
-    "preferred_locale": "kk",
-    "favorite_sports": ["football", "running"],
-    "size_profile": {
-      "shoe": {"uk": "10"},
-      "apparel": {"top": "M"}
-    }
-  },
-  "loyalty": {
-    "tier_code": "silver",
-    "discount_percent": "10.00",
-    "tier_valid_until": "2027-07-23"
-  },
-  "wallet": {
-    "card_number": "980124",
-    "barcode": "980124000001"
-  }
+  "customer_id": "uuid",
+  "version": 12,
+  "event_type": "customer.updated"
 }
 ```
+
+### Получить историю покупок
+
+```http
+GET /api/v1/me/purchases?limit=20&cursor=opaque-cursor
+```
+
+Response:
+
+```json
+{
+  "data": [
+    {
+      "transaction_id": "uuid",
+      "type": "purchase",
+      "status": "completed",
+      "channel": "pos",
+      "store_id": "uuid",
+      "business_date": "2026-07-15",
+      "occurred_at": "2026-07-15T18:20:00+05:00",
+      "currency": "KZT",
+      "totals": {
+        "gross_amount": "79990.00",
+        "discount_amount": "7999.00",
+        "loyalty_discount_amount": "7999.00",
+        "net_amount": "71991.00"
+      },
+      "loyalty": {
+        "tier_id": "uuid",
+        "discount_percent": "10.00",
+        "evaluation_id": "uuid"
+      },
+      "lines": [
+        {"sku": "RUN-SHOE-001-UK10", "name": "Бутсы", "quantity": "1", "net_amount": "71991.00", "product_variant_id": "uuid"}
+      ]
+    }
+  ],
+  "page": {"limit": 20, "next_cursor": "opaque-cursor", "has_more": true}
+}
+```
+
 
 ### Обновить consent
 
@@ -339,6 +473,104 @@ Response:
   "marketing_trigger_status": "accepted"
 }
 ```
+
+
+## Customer 360 Headless API
+
+Назначение: server-to-server передача профиля, текущей скидки/tier, истории покупок и omnichannel identities в существующий личный кабинет, сайт и мобильное приложение. Эти методы принадлежат customer/api и возвращают Customer 360 read models поверх canonical контрактов.
+
+### Получить профиль 360 по customer id
+
+```http
+GET /api/v1/customers/{customer_id}/profile360?include=identities,purchase_history,loyalty_snapshot,wallet
+```
+
+Response использует `Customer360Profile`. Для history применяется та же пагинация, что в общем стандарте; если `purchase_history` не запрошена, блок не возвращается.
+
+Обязательные scopes:
+
+- `customer.profile.read` для базового профиля;
+- `customer.history.read` для истории покупок;
+- `customer.identity.read` для omnichannel graph;
+- `customer.pii.read` только для немаскированных PII, по умолчанию PII маскируются.
+
+### Разрешить omnichannel identity
+
+```http
+POST /api/v1/customer-identities/resolve
+```
+
+Request:
+
+```json
+{
+  "identity": {
+    "type": "wallet_barcode",
+    "value": "980124000001"
+  },
+  "source_system": "pos-kassa",
+  "channel": "pos"
+}
+```
+
+Response:
+
+```json
+{
+  "customer_id": "uuid",
+  "match_status": "matched",
+  "matched_identity_id": "uuid",
+  "requires_merge_review": false,
+  "linked_channels": {
+    "pos": true,
+    "web": true,
+    "mobile_app": true,
+    "wallet": true,
+    "phone": true
+  }
+}
+```
+
+`match_status` values: `matched`, `not_found`, `conflict`, `merged_customer`. При `conflict` API не выполняет автослияние и возвращает `requires_merge_review = true`.
+
+### Привязать identity к клиенту
+
+```http
+POST /api/v1/customers/{customer_id}/identities
+```
+
+Request:
+
+```json
+{
+  "type": "app_user",
+  "value": "app-user-123",
+  "source_system": "mobile-app",
+  "is_primary": false,
+  "verification": {
+    "verified": true,
+    "method": "oauth_subject"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "identity_id": "uuid",
+  "customer_id": "uuid",
+  "event_type": "customer.identity.linked",
+  "merge_review_required": false
+}
+```
+
+Правила:
+
+- write-запрос идемпотентен по `Idempotency-Key + type + normalized_value + tenant_id`;
+- телефон нормализуется в E.164, email в lowercase normalized form, wallet barcode/card number без пробелов и визуальных разделителей;
+- если активная identity уже связана с другим active customer, создается conflict/audit case, а не новый дубль;
+- phone и wallet linking требуют verified evidence или admin permission `customer.identity.link_unverified`.
 
 ## 1C / ERP API
 
