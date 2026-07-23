@@ -113,3 +113,7 @@ export const seedData = {
     }
   ]
 };
+
+export function createSeedData() {
+  return structuredClone(seedData);
+}

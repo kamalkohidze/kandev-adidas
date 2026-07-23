@@ -1,3 +1,5 @@
+import { translate } from "../modules/i18n/index.js";
+
 export function createJsonResponse(status, payload, headers = {}) {
   return {
     status,
@@ -9,21 +11,21 @@ export function createJsonResponse(status, payload, headers = {}) {
   };
 }
 
-export function createNotFoundResponse() {
+export function createNotFoundResponse(locale = "ru") {
   return createJsonResponse(404, {
     error: {
       code: "not_found",
-      message: "Route not found",
+      message: translate("api", "error.not_found", locale),
       details: []
     }
   });
 }
 
-export function createValidationResponse(details) {
+export function createValidationResponse(details, locale = "ru") {
   return createJsonResponse(400, {
     error: {
       code: "validation_error",
-      message: "Request validation failed",
+      message: translate("api", "error.validation_error", locale),
       details
     }
   });

@@ -2,8 +2,11 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerCustomerRoutes } from "../modules/customer/api/routes.js";
+import { registerI18nRoutes } from "../modules/i18n/routes.js";
+import { resolveRequestLocale } from "../modules/i18n/index.js";
 import { createJsonResponse, createNotFoundResponse, parseJsonBody } from "./http.js";
 import { moduleRegistry } from "./module-registry.js";
+import { createSeedData } from "./seed-data.js";
 
 const rootDir = fileURLToPath(new URL("../..", import.meta.url));
 const publicDir = join(rootDir, "public");
@@ -17,6 +20,7 @@ const staticTypes = new Map([
 
 export function createApp() {
   const routes = [];
+  const appData = createSeedData();
 
   function route(method, path, handler) {
     routes.push({ method, path, handler });
@@ -37,7 +41,8 @@ export function createApp() {
     })
   );
 
-  registerCustomerRoutes(route);
+  registerCustomerRoutes(route, appData);
+  registerI18nRoutes(route);
 
   async function handle(method, rawUrl, options = {}) {
     const url = new URL(rawUrl, "http://localhost");
@@ -58,7 +63,7 @@ export function createApp() {
       }
     }
 
-    return createNotFoundResponse();
+    return createNotFoundResponse(resolveRequestLocale(options.headers || {}));
   }
 
   async function handleNodeRequest(request) {

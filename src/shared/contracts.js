@@ -1,5 +1,17 @@
 export const locales = ["kk", "ru", "en"];
 
+export const localeAliases = new Map([
+  ["kz", "kk"],
+  ["kk", "kk"],
+  ["kk-kz", "kk"],
+  ["ru", "ru"],
+  ["ru-kz", "ru"],
+  ["ru-ru", "ru"],
+  ["en", "en"],
+  ["en-us", "en"],
+  ["en-gb", "en"]
+]);
+
 export const identityTypes = [
   "phone",
   "email",
@@ -15,19 +27,26 @@ export const identityTypes = [
 
 export const customerStatuses = ["active", "blocked", "merged", "deleted"];
 
-export function normalizeLocale(value, fallback = "ru") {
-  const normalized = String(value || fallback).trim().toLowerCase();
-  const aliases = new Map([
-    ["kz", "kk"],
-    ["kk-kz", "kk"],
-    ["ru-kz", "ru"],
-    ["ru-ru", "ru"],
-    ["en-us", "en"],
-    ["en-gb", "en"]
-  ]);
+export const favoriteSports = ["running", "training", "football"];
 
-  const locale = aliases.get(normalized) || normalized;
+export function normalizeLocale(value, fallback = "ru") {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const locale = localeAliases.get(raw) || raw;
   return locales.includes(locale) ? locale : fallback;
+}
+
+export function normalizeLocaleStrict(value) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const locale = localeAliases.get(raw) || raw;
+  return locales.includes(locale) ? locale : null;
+}
+
+export function isLocale(value) {
+  return normalizeLocaleStrict(value) !== null;
+}
+
+export function isFavoriteSport(value) {
+  return favoriteSports.includes(value);
 }
 
 export function assertIdentityType(type) {
