@@ -1,7 +1,9 @@
 import { getLocaleDisplayName, translate } from "../../i18n/index.js";
 import { normalizeLocale } from "../../../shared/contracts.js";
+import { createTransactionLedger } from "../../transactions/ledger/repository.js";
 
 export function createCustomerProfileService(seedData, identityService) {
+  const transactionLedger = createTransactionLedger(seedData);
   function getProfile360({ customerId, include = [], acceptLanguage = "ru" }) {
     const customer = seedData.customers.find((candidate) => candidate.id === customerId);
 
@@ -9,8 +11,14 @@ export function createCustomerProfileService(seedData, identityService) {
       return null;
     }
 
+    const annualSpend = transactionLedger.calculateRollingAnnualSpend({
+      customerId,
+      tenantId: customer.tenant_id,
+      currency: customer.annual_spend?.currency || "KZT"
+    }) || customer.annual_spend;
+
     const profile = {
-      customer: toCustomerProfile(customer, acceptLanguage),
+      customer: toCustomerProfile(customer, acceptLanguage, annualSpend),
       loyalty_snapshot: seedData.loyalty_accounts.find((account) => account.customer_id === customerId) || null,
       wallet: toWalletCard(seedData.wallet_cards.find((card) => card.customer_id === customerId) || null, customer),
       localization: toProfileLocalization(customer, acceptLanguage),
@@ -22,8 +30,7 @@ export function createCustomerProfileService(seedData, identityService) {
     }
 
     if (include.includes("purchase_history")) {
-      profile.purchase_history = seedData.transactions
-        .filter((transaction) => transaction.customer_id === customerId)
+      profile.purchase_history = transactionLedger.listCustomerTransactions({ customerId, tenantId: customer.tenant_id })
         .map(toPurchaseHistoryItem);
     }
 
@@ -82,7 +89,7 @@ export function createCustomerProfileService(seedData, identityService) {
   }
 }
 
-function toCustomerProfile(customer, acceptLanguage) {
+function toCustomerProfile(customer, acceptLanguage, annualSpend) {
   const preferredLocale = normalizeLocale(customer.preferred_locale || acceptLanguage);
 
   return {
@@ -94,7 +101,7 @@ function toCustomerProfile(customer, acceptLanguage) {
     preferred_locale_display_name: getLocaleDisplayName(preferredLocale, acceptLanguage),
     favorite_sports: customer.favorite_sports,
     size_profile: customer.size_profile,
-    annual_spend: customer.annual_spend,
+    annual_spend: annualSpend,
     last_activity: customer.last_activity
   };
 }
