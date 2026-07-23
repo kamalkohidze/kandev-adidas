@@ -58,8 +58,11 @@ export const seedData = {
   ],
   loyalty_accounts: [
     {
-      loyalty_account_id: "44444444-4444-4444-8444-444444444444",
+      id: "44444444-4444-4444-8444-444444444444",
+      tenant_id: "00000000-0000-4000-8000-000000000001",
       customer_id: "11111111-1111-4111-8111-111111111111",
+      current_tier_id: "66666666-6666-4666-8666-666666666662",
+      current_discount_percent: "10.00",
       tier_code: "silver",
       tier_name: "Silver",
       discount_percent: "10.00",
@@ -69,7 +72,145 @@ export const seedData = {
         currency: "KZT",
         window_start: "2025-07-24",
         window_end: "2026-07-23"
-      }
+      },
+      retention_gap_amount: {
+        amount: "0.00",
+        currency: "KZT"
+      },
+      status: "active",
+      created_at: "2026-01-10T10:00:00+05:00",
+      updated_at: "2026-07-23T10:00:00+05:00",
+      version: 1
+    }
+  ],
+  loyalty_tier_rules: [
+    {
+      id: "loyalty-tier-rule-base-kzt",
+      tier_id: "66666666-6666-4666-8666-666666666660",
+      tier_code: "base",
+      tier_name: "Base",
+      currency: "KZT",
+      threshold_amount: "0.00",
+      discount_percent: "0.00",
+      priority: 0
+    },
+    {
+      id: "loyalty-tier-rule-bronze-kzt",
+      tier_id: "66666666-6666-4666-8666-666666666661",
+      tier_code: "bronze",
+      tier_name: "Bronze",
+      currency: "KZT",
+      threshold_amount: "50000.00",
+      discount_percent: "5.00",
+      priority: 50
+    },
+    {
+      id: "loyalty-tier-rule-silver-kzt",
+      tier_id: "66666666-6666-4666-8666-666666666662",
+      tier_code: "silver",
+      tier_name: "Silver",
+      currency: "KZT",
+      threshold_amount: "150000.00",
+      discount_percent: "10.00",
+      priority: 150
+    },
+    {
+      id: "loyalty-tier-rule-gold-kzt",
+      tier_id: "66666666-6666-4666-8666-666666666663",
+      tier_code: "gold",
+      tier_name: "Gold",
+      currency: "KZT",
+      threshold_amount: "350000.00",
+      discount_percent: "15.00",
+      priority: 350
+    }
+  ],
+  products: [
+    {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+      tenant_id: "00000000-0000-4000-8000-000000000001",
+      status: "active",
+      sku: "RUN-SHOE-001",
+      name: { kk: null, ru: "Футбольные бутсы", en: "Football boots" },
+      description: { kk: null, ru: null, en: null },
+      brand: "adidas",
+      category_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+      category_path: ["bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1"],
+      sport_tags: ["football"],
+      product_type: "shoes",
+      collection: null,
+      season: null,
+      attributes: {},
+      discount_policy: {
+        loyalty_discount_allowed: true,
+        global_sale_excluded: false,
+        personal_promo_allowed: true
+      },
+      external_refs: [],
+      created_at: "2026-01-01T00:00:00+05:00",
+      updated_at: "2026-01-01T00:00:00+05:00",
+      version: 1
+    },
+    {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2",
+      tenant_id: "00000000-0000-4000-8000-000000000001",
+      status: "active",
+      sku: "SALE-JACKET-001",
+      name: { kk: null, ru: "Sale jacket", en: "Sale jacket" },
+      description: { kk: null, ru: null, en: null },
+      brand: "adidas",
+      category_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+      category_path: ["bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2"],
+      sport_tags: ["training"],
+      product_type: "apparel",
+      collection: null,
+      season: null,
+      attributes: {},
+      discount_policy: {
+        loyalty_discount_allowed: false,
+        global_sale_excluded: false,
+        personal_promo_allowed: false
+      },
+      external_refs: [],
+      created_at: "2026-01-01T00:00:00+05:00",
+      updated_at: "2026-01-01T00:00:00+05:00",
+      version: 1
+    }
+  ],
+  product_variants: [
+    {
+      id: "88888888-8888-4888-8888-888888888888",
+      tenant_id: "00000000-0000-4000-8000-000000000001",
+      product_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+      variant_sku: "RUN-SHOE-001-UK10",
+      barcode: "4870000000012",
+      color: { code: "black", name: { kk: null, ru: "Черный", en: "Black" } },
+      size: { system: "UK", value: "10" },
+      price: { amount: "79990.00", currency: "KZT" },
+      branch_prices: [],
+      inventory: { total_available: 12, by_branch: [] },
+      status: "active",
+      external_refs: [],
+      created_at: "2026-01-01T00:00:00+05:00",
+      updated_at: "2026-01-01T00:00:00+05:00",
+      version: 1
+    },
+    {
+      id: "88888888-8888-4888-8888-888888888889",
+      tenant_id: "00000000-0000-4000-8000-000000000001",
+      product_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2",
+      variant_sku: "SALE-JACKET-001-M",
+      barcode: "4870000000013",
+      color: { code: "blue", name: { kk: null, ru: "Синий", en: "Blue" } },
+      size: { system: "INT", value: "M" },
+      price: { amount: "59990.00", currency: "KZT" },
+      branch_prices: [],
+      inventory: { total_available: 6, by_branch: [] },
+      status: "active",
+      external_refs: [],
+      created_at: "2026-01-01T00:00:00+05:00",
+      updated_at: "2026-01-01T00:00:00+05:00",
+      version: 1
     }
   ],
   wallet_cards: [
@@ -156,7 +297,8 @@ export const seedData = {
       version: 1
     }
   ],
-  transaction_events: []
+  transaction_events: [],
+  loyalty_events: []
 };
 
 export function createSeedData() {
