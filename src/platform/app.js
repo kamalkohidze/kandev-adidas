@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { registerCustomerRoutes } from "../modules/customer/api/routes.js";
 import { registerI18nRoutes } from "../modules/i18n/routes.js";
 import { resolveRequestLocale } from "../modules/i18n/index.js";
+import { registerLoyaltyRoutes } from "../modules/loyalty/api/routes.js";
 import { registerTransactionRoutes } from "../modules/transactions/api/routes.js";
 import { createJsonResponse, createNotFoundResponse, parseJsonBody } from "./http.js";
 import { moduleRegistry } from "./module-registry.js";
@@ -31,7 +32,7 @@ export function createApp() {
     createJsonResponse(200, {
       status: "ok",
       service: "uco-crm-retail-platform",
-      contracts: ["Customer", "CustomerIdentity", "Customer360Profile", "Transaction", "TransactionLine"],
+      contracts: ["Customer", "CustomerIdentity", "Customer360Profile", "Transaction", "TransactionLine", "LoyaltyAccount"],
       generated_at: new Date().toISOString()
     })
   );
@@ -44,6 +45,7 @@ export function createApp() {
 
   registerCustomerRoutes(route, appData);
   registerTransactionRoutes(route, appData);
+  registerLoyaltyRoutes(route, appData);
   registerI18nRoutes(route);
 
   async function handle(method, rawUrl, options = {}) {
