@@ -28,6 +28,13 @@ export const moduleRegistry = [
     contracts: ["LoyaltyAccount"]
   },
   {
+    code: "promotions",
+    title: "Personalized coupon issuing, validation, and redemption",
+    source_task: "promotions",
+    directories: ["src/modules/promotions/coupons", "src/modules/promotions/rules", "src/modules/promotions/api"],
+    contracts: ["PromotionCoupon"]
+  },
+  {
     code: "catalog",
     title: "Catalog, variants, prices, inventory",
     source_task: "07",

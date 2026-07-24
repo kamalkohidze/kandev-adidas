@@ -298,7 +298,9 @@ export const seedData = {
     }
   ],
   transaction_events: [],
-  loyalty_events: []
+  loyalty_events: [],
+  promotion_coupons: [],
+  promotion_events: []
 };
 
 export function createSeedData() {
