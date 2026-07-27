@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { registerCatalogRoutes } from "../modules/catalog/api/routes.js";
 import { registerCustomerRoutes } from "../modules/customer/api/routes.js";
 import { registerI18nRoutes } from "../modules/i18n/routes.js";
 import { resolveRequestLocale } from "../modules/i18n/index.js";
@@ -21,9 +22,9 @@ const staticTypes = new Map([
   [".json", "application/json; charset=utf-8"]
 ]);
 
-export function createApp() {
+export function createApp({ data = createSeedData(), resolveTenant = null } = {}) {
   const routes = [];
-  const appData = createSeedData();
+  const appData = data;
 
   function route(method, path, handler) {
     routes.push({ method, path, handler });
@@ -37,6 +38,8 @@ export function createApp() {
         "Customer",
         "CustomerIdentity",
         "Customer360Profile",
+        "Product",
+        "ProductVariant",
         "Transaction",
         "TransactionLine",
         "LoyaltyAccount",
@@ -53,6 +56,7 @@ export function createApp() {
   );
 
   registerCustomerRoutes(route, appData);
+  registerCatalogRoutes(route, appData);
   registerTransactionRoutes(route, appData);
   registerLoyaltyRoutes(route, appData);
   registerPromotionRoutes(route, appData);
@@ -67,7 +71,8 @@ export function createApp() {
         headers: options.headers || {},
         query: url.searchParams,
         body: options.body ?? null,
-        params: routeMatch.params
+        params: routeMatch.params,
+        tenantId: options.tenantId ?? null
       });
     }
 
@@ -83,9 +88,11 @@ export function createApp() {
 
   async function handleNodeRequest(request) {
     const body = await parseJsonBody(request);
+    const tenantId = resolveTenant ? await resolveTenant(request) : null;
     return handle(request.method || "GET", request.url || "/", {
       headers: request.headers,
-      body
+      body,
+      tenantId
     });
   }
 
