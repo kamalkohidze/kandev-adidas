@@ -49,6 +49,17 @@ export const moduleRegistry = [
     contracts: ["MessageTemplate"]
   },
   {
+    code: "recommendations",
+    title: "Deterministic product recommendations",
+    source_task: "recommendations",
+    directories: [
+      "src/modules/recommendations/engine",
+      "src/modules/recommendations/api",
+      "src/modules/recommendations/message-blocks"
+    ],
+    contracts: ["RecommendationSet", "RecommendationItem", "RecommendationReason"]
+  },
+  {
     code: "integrations",
     title: "POS, ecommerce, mobile app, 1C, ERP, providers",
     source_task: "18-20",
