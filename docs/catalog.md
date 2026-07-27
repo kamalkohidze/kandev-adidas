@@ -42,8 +42,19 @@ headless namespace:
 - `GET /api/v1/catalog/prices`
 - `GET /api/v1/catalog/inventory`
 
-Основные query-параметры: `tenant_id`, `query`/`q`, `locale`, `branch_id`,
-`product_id`, `size_system`, `size_value`, `status`, `in_stock`, `at`, `limit`.
+Основные query-параметры: `query`/`q`, `locale`, `branch_id`, `product_id`,
+`size_system`, `size_value`, `status`, `in_stock`, `at`, `limit`.
 `Accept-Language` поддерживает canonical aliases, включая `KZ -> kk`.
+
+Tenant не принимается из query или заголовка клиента. Каждый catalog read request
+требует trusted `tenantId`, переданный платформой после аутентификации; без него API
+возвращает `validation_error`. Некорректный `at` также возвращает `validation_error`
+до выполнения поиска или расчёта effective price.
+
+Стандартный Node bootstrap использует `UCO_TENANT_ID` из process configuration как
+trusted tenant context. Если переменная не задана, локальный scaffold использует
+seed tenant `00000000-0000-4000-8000-000000000001`; production deployment должен
+явно задать `UCO_TENANT_ID` или передать per-request resolver из authentication
+middleware при создании app.
 
 ERP/1C import и write endpoints намеренно не реализованы в этом модуле.

@@ -13,8 +13,7 @@ import { createCatalogServices } from "../index.js";
 export function registerCatalogRoutes(route, data = createSeedData()) {
   const catalog = createCatalogServices(data);
 
-  route("GET", "/api/v1/catalog/products", async ({ headers, query }) => {
-    const locale = getLocale(headers, query);
+  catalogReadRoute("/api/v1/catalog/products", async ({ query, tenantId, locale }) => {
     const limit = parseLimit(query.get("limit"));
     const branchId = query.get("branch_id");
     const sizeSystem = query.get("size_system");
@@ -22,7 +21,7 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
     const inStock = parseBoolean(query.get("in_stock"));
 
     let products = catalog.products.searchProducts({
-      tenantId: query.get("tenant_id"),
+      tenantId,
       query: query.get("query") || query.get("q") || "",
       status: query.get("status"),
       brand: query.get("brand"),
@@ -35,7 +34,7 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
       const matchingProductIds = new Set(
         catalog.inventory
           .listBalances({
-            tenantId: query.get("tenant_id"),
+            tenantId,
             branchId,
             sizeSystem,
             sizeValue,
@@ -61,15 +60,16 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
     return paginatedResponse(dataPage, limit, products.length > limit);
   });
 
-  route("GET", "/api/v1/catalog/products/:product_id", async ({
-    headers,
+  catalogReadRoute("/api/v1/catalog/products/:product_id", async ({
     query,
-    params
+    params,
+    tenantId,
+    locale,
+    at
   }) => {
-    const locale = getLocale(headers, query);
     const product = catalog.products.getProduct({
       productId: params.product_id,
-      tenantId: query.get("tenant_id"),
+      tenantId,
       locale
     });
     if (!product) {
@@ -82,7 +82,7 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
         productId: product.id,
         locale
       })
-      .map((variant) => enrichVariant(variant, query));
+      .map((variant) => enrichVariant(variant, query, at));
 
     return createJsonResponse(200, {
       data: {
@@ -92,15 +92,16 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
     });
   });
 
-  route("GET", "/api/v1/catalog/products/:product_id/variants", async ({
-    headers,
+  catalogReadRoute("/api/v1/catalog/products/:product_id/variants", async ({
     query,
-    params
+    params,
+    tenantId,
+    locale,
+    at
   }) => {
-    const locale = getLocale(headers, query);
     const product = catalog.products.getProduct({
       productId: params.product_id,
-      tenantId: query.get("tenant_id"),
+      tenantId,
       locale
     });
     if (!product) {
@@ -118,17 +119,16 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
         locale
       }),
       query
-    ).map((variant) => enrichVariant(variant, query));
+    ).map((variant) => enrichVariant(variant, query, at));
 
     return paginatedResponse(variants, variants.length, false);
   });
 
-  route("GET", "/api/v1/catalog/variants", async ({ headers, query }) => {
-    const locale = getLocale(headers, query);
+  catalogReadRoute("/api/v1/catalog/variants", async ({ query, tenantId, locale, at }) => {
     const limit = parseLimit(query.get("limit"));
     const variants = filterVariants(
       catalog.variants.listVariants({
-        tenantId: query.get("tenant_id"),
+        tenantId,
         productId: query.get("product_id"),
         status: query.get("status"),
         sizeSystem: query.get("size_system"),
@@ -141,21 +141,22 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
     );
 
     return paginatedResponse(
-      variants.slice(0, limit).map((variant) => enrichVariant(variant, query)),
+      variants.slice(0, limit).map((variant) => enrichVariant(variant, query, at)),
       limit,
       variants.length > limit
     );
   });
 
-  route("GET", "/api/v1/catalog/variants/:variant_id", async ({
-    headers,
+  catalogReadRoute("/api/v1/catalog/variants/:variant_id", async ({
     query,
-    params
+    params,
+    tenantId,
+    locale,
+    at
   }) => {
-    const locale = getLocale(headers, query);
     const variant = catalog.variants.getVariant({
       variantId: params.variant_id,
-      tenantId: query.get("tenant_id"),
+      tenantId,
       locale
     });
     if (!variant) {
@@ -163,67 +164,55 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
     }
 
     return createJsonResponse(200, {
-      data: enrichVariant(variant, query)
+      data: enrichVariant(variant, query, at)
     });
   });
 
-  route("GET", "/api/v1/catalog/variants/:variant_id/price", async ({
-    headers,
+  catalogReadRoute("/api/v1/catalog/variants/:variant_id/price", async ({
     query,
-    params
+    params,
+    tenantId,
+    locale,
+    at
   }) => {
-    const locale = getLocale(headers, query);
-    let price;
-    try {
-      price = catalog.prices.getPrice({
-        variantId: params.variant_id,
-        tenantId: query.get("tenant_id"),
-        branchId: query.get("branch_id"),
-        at: query.get("at") || new Date().toISOString()
-      });
-    } catch (error) {
-      return createValidationResponse(
-        [{ field: "at", reason: error.message }],
-        locale
-      );
-    }
+    const price = catalog.prices.getPrice({
+      variantId: params.variant_id,
+      tenantId,
+      branchId: query.get("branch_id"),
+      at
+    });
     return price ? createJsonResponse(200, { data: price }) : createNotFoundResponse(locale);
   });
 
-  route("GET", "/api/v1/catalog/prices", async ({ headers, query }) => {
-    const locale = getLocale(headers, query);
+  catalogReadRoute("/api/v1/catalog/prices", async ({ query, tenantId, at }) => {
     const variantId = query.get("variant_id");
-    try {
-      const prices = variantId
-        ? [
-            catalog.prices.getPrice({
-              variantId,
-              tenantId: query.get("tenant_id"),
-              branchId: query.get("branch_id"),
-              at: query.get("at") || new Date().toISOString()
-            })
-          ].filter(Boolean)
-        : catalog.prices.listPrices({
-            tenantId: query.get("tenant_id"),
-            productId: query.get("product_id"),
+    const prices = variantId
+      ? [
+          catalog.prices.getPrice({
+            variantId,
+            tenantId,
             branchId: query.get("branch_id"),
-            at: query.get("at") || new Date().toISOString()
-          });
-      return paginatedResponse(prices, prices.length, false);
-    } catch (error) {
-      return createValidationResponse([{ field: "at", reason: error.message }], locale);
-    }
+            at
+          })
+        ].filter(Boolean)
+      : catalog.prices.listPrices({
+          tenantId,
+          productId: query.get("product_id"),
+          branchId: query.get("branch_id"),
+          at
+        });
+    return paginatedResponse(prices, prices.length, false);
   });
 
-  route("GET", "/api/v1/catalog/variants/:variant_id/inventory", async ({
-    headers,
+  catalogReadRoute("/api/v1/catalog/variants/:variant_id/inventory", async ({
     query,
-    params
+    params,
+    tenantId,
+    locale
   }) => {
-    const locale = getLocale(headers, query);
     const balance = catalog.inventory.getBalance({
       variantId: params.variant_id,
-      tenantId: query.get("tenant_id"),
+      tenantId,
       branchId: query.get("branch_id")
     });
     return balance
@@ -231,9 +220,9 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
       : createNotFoundResponse(locale);
   });
 
-  route("GET", "/api/v1/catalog/inventory", async ({ query }) => {
+  catalogReadRoute("/api/v1/catalog/inventory", async ({ query, tenantId }) => {
     const balances = catalog.inventory.listBalances({
-      tenantId: query.get("tenant_id"),
+      tenantId,
       productId: query.get("product_id"),
       branchId: query.get("branch_id"),
       sizeSystem: query.get("size_system"),
@@ -243,14 +232,30 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
     return paginatedResponse(balances, balances.length, false);
   });
 
-  function enrichVariant(variant, query) {
+  function catalogReadRoute(path, handler) {
+    route("GET", path, async (request) => {
+      const locale = getLocale(request.headers, request.query);
+      if (!isTenantContext(request.tenantId)) {
+        return createValidationResponse([{ field: "tenant_context", reason: "required" }], locale);
+      }
+
+      const at = request.query.get("at") || new Date().toISOString();
+      if (!Number.isFinite(Date.parse(at))) {
+        return createValidationResponse([{ field: "at", reason: "price_at_invalid" }], locale);
+      }
+
+      return handler({ ...request, tenantId: request.tenantId, locale, at });
+    });
+  }
+
+  function enrichVariant(variant, query, at) {
     return {
       ...variant,
       effective_price: catalog.prices.getPrice({
         variantId: variant.id,
         tenantId: variant.tenant_id,
         branchId: query.get("branch_id"),
-        at: query.get("at") || new Date().toISOString()
+        at
       }),
       effective_inventory: catalog.inventory.getBalance({
         variantId: variant.id,
@@ -276,6 +281,10 @@ export function registerCatalogRoutes(route, data = createSeedData()) {
       return !inStock || balance.available > 0;
     });
   }
+}
+
+function isTenantContext(value) {
+  return typeof value === "string" && value.trim() !== "";
 }
 
 function getLocale(headers, query) {

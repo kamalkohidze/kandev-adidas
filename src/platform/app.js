@@ -22,9 +22,9 @@ const staticTypes = new Map([
   [".json", "application/json; charset=utf-8"]
 ]);
 
-export function createApp() {
+export function createApp({ data = createSeedData(), resolveTenant = null } = {}) {
   const routes = [];
-  const appData = createSeedData();
+  const appData = data;
 
   function route(method, path, handler) {
     routes.push({ method, path, handler });
@@ -71,7 +71,8 @@ export function createApp() {
         headers: options.headers || {},
         query: url.searchParams,
         body: options.body ?? null,
-        params: routeMatch.params
+        params: routeMatch.params,
+        tenantId: options.tenantId ?? null
       });
     }
 
@@ -87,9 +88,11 @@ export function createApp() {
 
   async function handleNodeRequest(request) {
     const body = await parseJsonBody(request);
+    const tenantId = resolveTenant ? await resolveTenant(request) : null;
     return handle(request.method || "GET", request.url || "/", {
       headers: request.headers,
-      body
+      body,
+      tenantId
     });
   }
 

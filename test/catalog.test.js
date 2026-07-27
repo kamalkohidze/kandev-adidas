@@ -42,6 +42,31 @@ test("product and variant SKUs are unique inside a tenant", () => {
   assert.equal(otherTenant.created, true);
 });
 
+test("canonical Product and ProductVariant IDs cannot move across tenants", () => {
+  const data = createSeedData();
+  const products = createProductRepository(data);
+  const variants = createVariantRepository(data, products);
+
+  assert.throws(
+    () =>
+      products.upsert({
+        ...structuredClone(data.products[0]),
+        tenant_id: "00000000-0000-4000-8000-000000000002",
+        sku: "CROSS-TENANT-PRODUCT"
+      }),
+    /product_id_tenant_mismatch/
+  );
+  assert.throws(
+    () =>
+      variants.upsert({
+        ...structuredClone(data.product_variants[0]),
+        tenant_id: "00000000-0000-4000-8000-000000000002",
+        variant_sku: "CROSS-TENANT-VARIANT"
+      }),
+    /variant_id_tenant_mismatch/
+  );
+});
+
 test("localized product and color values fall back to Russian", () => {
   const catalog = createCatalogServices(createSeedData());
   const product = catalog.products.getProduct({
@@ -122,6 +147,67 @@ test("variant repository supports UK, US and EU size systems", () => {
     });
     assert.equal(result.variant.size.system, system);
   }
+});
+
+test("variant upsert rejects inconsistent price periods and inventory totals", () => {
+  const data = createSeedData();
+  const variants = createVariantRepository(data);
+
+  assert.throws(
+    () =>
+      variants.upsert({
+        ...structuredClone(data.product_variants[0]),
+        id: "88888888-8888-4888-8888-888888888877",
+        variant_sku: "INVALID-PRICE-RANGE",
+        barcode: "4870000000199",
+        branch_prices: [
+          {
+            branch_id: branchId,
+            amount: "1.00",
+            currency: "KZT",
+            valid_from: "2026-08-02T00:00:00Z",
+            valid_to: "2026-08-01T00:00:00Z"
+          }
+        ]
+      }),
+    /branch_price_valid_to_before_valid_from/
+  );
+  assert.throws(
+    () =>
+      variants.upsert({
+        ...structuredClone(data.product_variants[0]),
+        id: "88888888-8888-4888-8888-888888888876",
+        variant_sku: "INVALID-INVENTORY-TOTAL",
+        barcode: "4870000000198",
+        inventory: {
+          total_available: 99,
+          by_branch: [{ branch_id: branchId, available: 1, reserved: 0 }]
+        }
+      }),
+    /inventory_total_available_mismatch/
+  );
+});
+
+test("entity updates replace stale input timestamps before publishing events", () => {
+  const data = createSeedData();
+  const catalog = createCatalogServices(data);
+  const originalProduct = structuredClone(data.products[0]);
+  const originalVariant = structuredClone(data.product_variants[0]);
+  const productResult = catalog.products.upsertProduct({
+    ...originalProduct,
+    brand: "adidas-performance"
+  });
+  const variantResult = catalog.variants.upsertVariant({
+    ...originalVariant,
+    color: {
+      ...originalVariant.color,
+      code: "black-updated"
+    }
+  });
+
+  assert.notEqual(productResult.product.updated_at, originalProduct.updated_at);
+  assert.equal(productResult.events[0].occurred_at, productResult.product.updated_at);
+  assert.notEqual(variantResult.variant.updated_at, originalVariant.updated_at);
 });
 
 test("inventory is selected by size and branch", () => {

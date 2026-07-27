@@ -70,8 +70,11 @@ export function createProductRepository(data) {
   }
 
   function upsert(input) {
-    const existing = input?.id ? findById(input.id, input.tenant_id || null) : null;
+    const existing = input?.id ? findById(input.id) : null;
     const product = canonicalizeProduct(input, existing);
+    if (existing && existing.tenant_id !== product.tenant_id) {
+      throw new Error("product_id_tenant_mismatch");
+    }
     const skuOwner = findBySku(product.sku, product.tenant_id);
 
     if (skuOwner && skuOwner.id !== product.id) {
@@ -141,7 +144,7 @@ export function canonicalizeProduct(input, existing = null) {
     ),
     external_refs: canonicalizeExternalRefs(input.external_refs ?? existing?.external_refs),
     created_at: existing?.created_at || input.created_at || now,
-    updated_at: input.updated_at || now,
+    updated_at: existing ? now : input.updated_at || now,
     version: existing ? existing.version + 1 : Number.isInteger(input.version) ? input.version : 1
   };
 }

@@ -95,8 +95,11 @@ export function createVariantRepository(
   }
 
   function upsert(input) {
-    const existing = input?.id ? findById(input.id, input.tenant_id || null) : null;
+    const existing = input?.id ? findById(input.id) : null;
     const variant = canonicalizeVariant(input, existing);
+    if (existing && existing.tenant_id !== variant.tenant_id) {
+      throw new Error("variant_id_tenant_mismatch");
+    }
     const product = productRepository.findById(variant.product_id, variant.tenant_id);
     if (!product) {
       throw new Error("variant_product_not_found");
@@ -166,7 +169,7 @@ export function canonicalizeVariant(input, existing = null) {
       input.external_refs ?? existing?.external_refs ?? []
     ),
     created_at: existing?.created_at || input.created_at || now,
-    updated_at: input.updated_at || now,
+    updated_at: existing ? now : input.updated_at || now,
     version: existing ? existing.version + 1 : Number.isInteger(input.version) ? input.version : 1
   };
 }
@@ -208,15 +211,19 @@ function canonicalizeBranchPrices(values) {
     throw new Error("variant_branch_prices_array_required");
   }
 
-  return values.map((price) => ({
-    branch_id: requiredString(price?.branch_id, "branch_price_branch_id_required"),
-    ...canonicalizePrice(price),
-    valid_from: validDate(price?.valid_from, "branch_price_valid_from_required"),
-    valid_to:
-      price?.valid_to === null || price?.valid_to === undefined
-        ? null
-        : validDate(price.valid_to, "branch_price_valid_to_invalid")
-  }));
+  return values.map((price) => {
+    const branchPrice = {
+      branch_id: requiredString(price?.branch_id, "branch_price_branch_id_required"),
+      ...canonicalizePrice(price),
+      valid_from: validDate(price?.valid_from, "branch_price_valid_from_required"),
+      valid_to:
+        price?.valid_to === null || price?.valid_to === undefined
+          ? null
+          : validDate(price.valid_to, "branch_price_valid_to_invalid")
+    };
+    assertDateRange(branchPrice.valid_from, branchPrice.valid_to);
+    return branchPrice;
+  });
 }
 
 function canonicalizeInventory(value = {}) {
@@ -228,14 +235,27 @@ function canonicalizeInventory(value = {}) {
     throw new Error("variant_inventory_by_branch_array_required");
   }
 
+  const balances = byBranch.map((balance) => ({
+    branch_id: requiredString(balance?.branch_id, "inventory_branch_id_required"),
+    available: nonNegativeInteger(balance?.available ?? 0),
+    reserved: nonNegativeInteger(balance?.reserved ?? 0)
+  }));
+  const totalAvailable = nonNegativeInteger(value.total_available ?? 0);
+  const branchTotal = balances.reduce((total, balance) => total + balance.available, 0);
+  if (totalAvailable !== branchTotal) {
+    throw new Error("inventory_total_available_mismatch");
+  }
+
   return {
-    total_available: nonNegativeInteger(value.total_available ?? 0),
-    by_branch: byBranch.map((balance) => ({
-      branch_id: requiredString(balance?.branch_id, "inventory_branch_id_required"),
-      available: nonNegativeInteger(balance?.available ?? 0),
-      reserved: nonNegativeInteger(balance?.reserved ?? 0)
-    }))
+    total_available: totalAvailable,
+    by_branch: balances
   };
+}
+
+function assertDateRange(validFrom, validTo) {
+  if (validTo && Date.parse(validTo) < Date.parse(validFrom)) {
+    throw new Error("branch_price_valid_to_before_valid_from");
+  }
 }
 
 function canonicalizeExternalRefs(value) {
