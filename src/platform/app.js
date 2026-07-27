@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { registerCatalogRoutes } from "../modules/catalog/api/routes.js";
 import { registerCustomerRoutes } from "../modules/customer/api/routes.js";
 import { registerI18nRoutes } from "../modules/i18n/routes.js";
 import { resolveRequestLocale } from "../modules/i18n/index.js";
@@ -37,6 +38,8 @@ export function createApp() {
         "Customer",
         "CustomerIdentity",
         "Customer360Profile",
+        "Product",
+        "ProductVariant",
         "Transaction",
         "TransactionLine",
         "LoyaltyAccount",
@@ -53,6 +56,7 @@ export function createApp() {
   );
 
   registerCustomerRoutes(route, appData);
+  registerCatalogRoutes(route, appData);
   registerTransactionRoutes(route, appData);
   registerLoyaltyRoutes(route, appData);
   registerPromotionRoutes(route, appData);

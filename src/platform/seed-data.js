@@ -187,8 +187,30 @@ export const seedData = {
       color: { code: "black", name: { kk: null, ru: "Черный", en: "Black" } },
       size: { system: "UK", value: "10" },
       price: { amount: "79990.00", currency: "KZT" },
-      branch_prices: [],
-      inventory: { total_available: 12, by_branch: [] },
+      branch_prices: [
+        {
+          branch_id: "55555555-5555-4555-8555-555555555555",
+          amount: "74990.00",
+          currency: "KZT",
+          valid_from: "2026-01-01T00:00:00+05:00",
+          valid_to: null
+        }
+      ],
+      inventory: {
+        total_available: 12,
+        by_branch: [
+          {
+            branch_id: "55555555-5555-4555-8555-555555555555",
+            available: 8,
+            reserved: 2
+          },
+          {
+            branch_id: "55555555-5555-4555-8555-555555555556",
+            available: 4,
+            reserved: 0
+          }
+        ]
+      },
       status: "active",
       external_refs: [],
       created_at: "2026-01-01T00:00:00+05:00",
@@ -205,7 +227,16 @@ export const seedData = {
       size: { system: "INT", value: "M" },
       price: { amount: "59990.00", currency: "KZT" },
       branch_prices: [],
-      inventory: { total_available: 6, by_branch: [] },
+      inventory: {
+        total_available: 6,
+        by_branch: [
+          {
+            branch_id: "55555555-5555-4555-8555-555555555555",
+            available: 6,
+            reserved: 1
+          }
+        ]
+      },
       status: "active",
       external_refs: [],
       created_at: "2026-01-01T00:00:00+05:00",
@@ -298,6 +329,7 @@ export const seedData = {
     }
   ],
   transaction_events: [],
+  catalog_events: [],
   loyalty_events: [],
   promotion_coupons: [],
   promotion_events: []
