@@ -8,6 +8,7 @@ import { resolveRequestLocale } from "../modules/i18n/index.js";
 import { registerLoyaltyRoutes } from "../modules/loyalty/api/routes.js";
 import { registerCrossSellRoutes } from "../modules/marketing/cross-sell/api/routes.js";
 import { registerContentRoutes } from "../modules/marketing/content/api/routes.js";
+import { registerDeliveryRoutes } from "../modules/marketing/delivery/api/routes.js";
 import { registerLifecycleRoutes } from "../modules/marketing/lifecycle/api/routes.js";
 import { registerMarketingTriggerRoutes } from "../modules/marketing/triggers/api/routes.js";
 import { registerSegmentRoutes } from "../modules/marketing/segments/api/routes.js";
@@ -56,7 +57,8 @@ export function createApp({ data = createSeedData(), resolveTenant = null } = {}
         "RecommendationItem",
         "RecommendationReason",
         "WorkflowDefinition",
-        "JourneyInstance"
+        "JourneyInstance",
+        "MessageDelivery"
       ],
       generated_at: new Date().toISOString()
     })
@@ -76,6 +78,7 @@ export function createApp({ data = createSeedData(), resolveTenant = null } = {}
   registerSegmentRoutes(route, appData);
   registerCrossSellRoutes(route, appData);
   registerContentRoutes(route, appData);
+  registerDeliveryRoutes(route, appData);
   registerWorkflowRoutes(route, appData);
   registerMarketingTriggerRoutes(route, appData);
   registerPromotionRoutes(route, appData);
