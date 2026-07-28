@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { evaluateCondition, createWorkflowPublicServices } from "./conditions.js";
 import { transitionJourney, transitionStep } from "./state.js";
+import { buildMarketingTriggerDeliveryPayload } from "../triggers/payload.js";
 
 const defaultMaxStepsPerRun = 50;
 const terminalStepStatuses = new Set(["completed", "skipped", "failed"]);
@@ -386,6 +387,7 @@ export function createWorkflowService(data, options = {}) {
     const action = step.action || {};
 
     if (action.type === "request_delivery") {
+      const delivery = buildDeliveryRequestPayload({ data, instance, action, asOf });
       const event = appendWorkflowEvent({
         tenantId: instance.tenant_id,
         eventType: "message.delivery.requested",
@@ -395,15 +397,7 @@ export function createWorkflowService(data, options = {}) {
         correlationId: instance.correlation_id,
         causationId: instance.trigger_event_id,
         idempotencyKey: `${instance.id}:${step.code}:delivery-requested`,
-        payload: {
-          journey_instance_id: instance.id,
-          workflow_code: instance.workflow_code,
-          customer_id: instance.customer_id,
-          template_code: action.template_code || null,
-          channel: action.channel || null,
-          locale: action.locale || instance.context.event.metadata?.locale || null,
-          variables: action.variables || {}
-        }
+        payload: delivery
       });
       return {
         action_type: action.type,
@@ -435,6 +429,24 @@ export function createWorkflowService(data, options = {}) {
     }
 
     throw new Error(`unsupported_action_type:${action.type}`);
+  }
+
+  function buildDeliveryRequestPayload({ data, instance, action, asOf }) {
+    const triggerPayload = action.payload_builder?.type === "marketing_trigger"
+      ? buildMarketingTriggerDeliveryPayload({ data, instance, action, asOf })
+      : {};
+
+    return {
+      journey_instance_id: instance.id,
+      workflow_code: instance.workflow_code,
+      customer_id: instance.customer_id,
+      template_code: action.template_code || null,
+      channel: triggerPayload.channel ?? action.channel ?? null,
+      locale: triggerPayload.locale ?? action.locale ?? instance.context.event.metadata?.locale ?? null,
+      variables: triggerPayload.variables ?? action.variables ?? {},
+      rendered_template: triggerPayload.rendered_template || null,
+      eligibility: triggerPayload.eligibility || null
+    };
   }
 
   function completeOrMove(instance, definition, step, asOf, nextStepCode) {
