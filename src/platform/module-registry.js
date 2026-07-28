@@ -45,8 +45,8 @@ export const moduleRegistry = [
     code: "marketing",
     title: "Segments, workflow, triggers, content, delivery",
     source_task: "09-15",
-    directories: ["src/modules/marketing", "src/modules/marketing/segments"],
-    contracts: ["Segment", "MessageTemplate"]
+    directories: ["src/modules/marketing", "src/modules/marketing/segments", "src/modules/marketing/lifecycle"],
+    contracts: ["Segment", "LifecycleState", "MessageTemplate"]
   },
   {
     code: "recommendations",

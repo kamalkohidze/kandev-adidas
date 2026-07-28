@@ -6,6 +6,7 @@ import { registerCustomerRoutes } from "../modules/customer/api/routes.js";
 import { registerI18nRoutes } from "../modules/i18n/routes.js";
 import { resolveRequestLocale } from "../modules/i18n/index.js";
 import { registerLoyaltyRoutes } from "../modules/loyalty/api/routes.js";
+import { registerLifecycleRoutes } from "../modules/marketing/lifecycle/api/routes.js";
 import { registerSegmentRoutes } from "../modules/marketing/segments/api/routes.js";
 import { registerPromotionRoutes } from "../modules/promotions/api/routes.js";
 import { registerRecommendationRoutes } from "../modules/recommendations/api/routes.js";
@@ -65,6 +66,7 @@ export function createApp({ data = createSeedData(), resolveTenant = null } = {}
   registerCatalogRoutes(route, appData);
   registerTransactionRoutes(route, appData);
   registerLoyaltyRoutes(route, appData);
+  registerLifecycleRoutes(route, appData);
   registerSegmentRoutes(route, appData);
   registerPromotionRoutes(route, appData);
   registerRecommendationRoutes(route, appData);
