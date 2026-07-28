@@ -9,6 +9,7 @@ import { registerLoyaltyRoutes } from "../modules/loyalty/api/routes.js";
 import { registerCrossSellRoutes } from "../modules/marketing/cross-sell/api/routes.js";
 import { registerLifecycleRoutes } from "../modules/marketing/lifecycle/api/routes.js";
 import { registerSegmentRoutes } from "../modules/marketing/segments/api/routes.js";
+import { registerWorkflowRoutes } from "../modules/marketing/workflow/api/routes.js";
 import { registerPromotionRoutes } from "../modules/promotions/api/routes.js";
 import { registerRecommendationRoutes } from "../modules/recommendations/api/routes.js";
 import { registerTransactionRoutes } from "../modules/transactions/api/routes.js";
@@ -51,7 +52,9 @@ export function createApp({ data = createSeedData(), resolveTenant = null } = {}
         "PromotionCoupon",
         "RecommendationSet",
         "RecommendationItem",
-        "RecommendationReason"
+        "RecommendationReason",
+        "WorkflowDefinition",
+        "JourneyInstance"
       ],
       generated_at: new Date().toISOString()
     })
@@ -70,6 +73,7 @@ export function createApp({ data = createSeedData(), resolveTenant = null } = {}
   registerLifecycleRoutes(route, appData);
   registerSegmentRoutes(route, appData);
   registerCrossSellRoutes(route, appData);
+  registerWorkflowRoutes(route, appData);
   registerPromotionRoutes(route, appData);
   registerRecommendationRoutes(route, appData);
   registerI18nRoutes(route);
