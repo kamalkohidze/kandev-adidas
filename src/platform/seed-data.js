@@ -332,7 +332,8 @@ export const seedData = {
   catalog_events: [],
   loyalty_events: [],
   promotion_coupons: [],
-  promotion_events: []
+  promotion_events: [],
+  lifecycle_events: []
 };
 
 export function createSeedData() {
