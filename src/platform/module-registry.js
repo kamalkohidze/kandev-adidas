@@ -50,7 +50,8 @@ export const moduleRegistry = [
       "src/modules/marketing/segments",
       "src/modules/marketing/lifecycle",
       "src/modules/marketing/cross-sell",
-      "src/modules/marketing/workflow"
+      "src/modules/marketing/workflow",
+      "src/modules/marketing/triggers"
     ],
     contracts: ["Segment", "LifecycleState", "WorkflowDefinition", "JourneyInstance", "MessageTemplate", "CrossSellCandidate"]
   },

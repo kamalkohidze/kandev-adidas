@@ -1,6 +1,7 @@
 import { createCrossSellService } from "../cross-sell/index.js";
 import { createLifecycleService } from "../lifecycle/index.js";
 import { createSegmentService } from "../segments/index.js";
+import { evaluateMarketingTriggerCondition } from "../triggers/payload.js";
 
 export function evaluateCondition(condition, context, services = createWorkflowPublicServices(context.data)) {
   if (!condition) {
@@ -169,6 +170,11 @@ function evaluateAtomicCondition(condition, context, services) {
       reason: "has_cross_sell_candidate",
       scenario_code: condition.scenario_code || null
     };
+  }
+
+  const triggerCondition = evaluateMarketingTriggerCondition(condition, context);
+  if (triggerCondition) {
+    return triggerCondition;
   }
 
   return {
