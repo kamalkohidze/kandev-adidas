@@ -53,6 +53,13 @@ import {
 } from "./ui.js";
 
 const sections = ["overview", "customer", "catalog", "recommendations", "marketing", "campaigns", "pos", "promotions", "delivery"];
+const optionalWorkspaces = {
+  catalog: { codes: ["catalog"], title: "Catalog / Inventory" },
+  recommendations: { codes: ["recommendations"], title: "Recommendations" },
+  marketing: { codes: ["marketing"], title: "Segments & Lifecycle" },
+  campaigns: { codes: ["marketing"], title: "Campaigns / Automation" },
+  delivery: { codes: ["marketing"], title: "Delivery / Messages" }
+};
 const storageKeyCoupon = "last-issued-coupon-code";
 const seedItems = [
   {
@@ -172,6 +179,9 @@ const localCopy = {
     "empty.noData": "Дерек жоқ",
     "status.loading": "Жүктелуде",
     "status.checking": "Тексерілуде",
+    "status.online": "Онлайн",
+    "status.issue": "Мәселе",
+    "status.unavailable": "Қолжетімсіз",
     "status.valid": "Жарамды",
     "status.invalid": "Жарамсыз",
     "status.redeemed": "Өтелді",
@@ -272,6 +282,9 @@ const localCopy = {
     "empty.noData": "Нет данных",
     "status.loading": "Загрузка",
     "status.checking": "Проверка",
+    "status.online": "Онлайн",
+    "status.issue": "Проблема",
+    "status.unavailable": "Недоступно",
     "status.valid": "Валиден",
     "status.invalid": "Невалиден",
     "status.redeemed": "Погашен",
@@ -372,6 +385,9 @@ const localCopy = {
     "empty.noData": "No data",
     "status.loading": "Loading",
     "status.checking": "Checking",
+    "status.online": "Online",
+    "status.issue": "Issue",
+    "status.unavailable": "Unavailable",
     "status.valid": "Valid",
     "status.invalid": "Invalid",
     "status.redeemed": "Redeemed",
@@ -382,6 +398,7 @@ const localCopy = {
 const elements = {
   locale: document.querySelector("#locale"),
   health: document.querySelector("#health"),
+  topCustomer: document.querySelector("#topCustomer"),
   refresh: document.querySelector("#refresh"),
   modulesCompact: document.querySelector("#modulesCompact"),
   overview: document.querySelector("#overviewPanel"),
@@ -405,7 +422,7 @@ async function boot() {
   applyStaticLabels();
   render();
   await Promise.all([loadSystem(), loadProfile()]);
-  await Promise.all([loadCatalogWorkspace(), refreshRecommendationWorkspace(), loadMarketingWorkspace(), loadCampaignBuilder()]);
+  await loadOptionalWorkspaces();
 }
 
 function wireEvents() {
@@ -463,7 +480,35 @@ function wireEvents() {
 
 async function refreshAll() {
   await Promise.all([loadSystem(), loadProfile()]);
-  await Promise.all([refreshCatalogWorkspace(), refreshRecommendationWorkspace(), refreshMarketingWorkspace(), refreshCampaignBuilder()]);
+  await refreshOptionalWorkspaces();
+}
+
+async function loadOptionalWorkspaces() {
+  const jobs = [];
+  if (isWorkspaceAvailable("catalog")) {
+    jobs.push(loadCatalogWorkspace());
+  }
+  if (isWorkspaceAvailable("recommendations")) {
+    jobs.push(refreshRecommendationWorkspace());
+  }
+  if (isWorkspaceAvailable("marketing")) {
+    jobs.push(loadMarketingWorkspace(), loadCampaignBuilder());
+  }
+  await Promise.all(jobs);
+}
+
+async function refreshOptionalWorkspaces() {
+  const jobs = [];
+  if (isWorkspaceAvailable("catalog")) {
+    jobs.push(refreshCatalogWorkspace());
+  }
+  if (isWorkspaceAvailable("recommendations")) {
+    jobs.push(refreshRecommendationWorkspace());
+  }
+  if (isWorkspaceAvailable("marketing")) {
+    jobs.push(refreshMarketingWorkspace(), refreshCampaignBuilder());
+  }
+  await Promise.all(jobs);
 }
 
 async function loadDictionary() {
@@ -684,16 +729,27 @@ function render(state = getState()) {
   applyStaticLabels();
   renderNavigation(state);
   renderTopHealth(state);
+  renderTopCustomerContext(state);
   renderModulesCompact(state);
   renderOverview(state);
   renderCustomer(state);
-  renderCatalogWorkspace(elements.catalog, t);
-  renderRecommendationWorkspace(elements.recommendations, t);
-  renderMarketingWorkspace(elements.marketing, t);
-  renderCampaignBuilder(elements.campaigns, t);
+  if (!renderUnavailableWorkspace("catalog", elements.catalog, state)) {
+    renderCatalogWorkspace(elements.catalog, t);
+  }
+  if (!renderUnavailableWorkspace("recommendations", elements.recommendations, state)) {
+    renderRecommendationWorkspace(elements.recommendations, t);
+  }
+  if (!renderUnavailableWorkspace("marketing", elements.marketing, state)) {
+    renderMarketingWorkspace(elements.marketing, t);
+  }
+  if (!renderUnavailableWorkspace("campaigns", elements.campaigns, state)) {
+    renderCampaignBuilder(elements.campaigns, t);
+  }
   renderPos(state);
   renderPromotions(state);
-  renderDeliveryWorkspace(elements.delivery);
+  if (!renderUnavailableWorkspace("delivery", elements.delivery, state)) {
+    renderDeliveryWorkspace(elements.delivery);
+  }
 }
 
 function renderNavigation(state) {
@@ -707,6 +763,40 @@ function renderNavigation(state) {
   });
 }
 
+function renderUnavailableWorkspace(section, element, state = getState()) {
+  if (isWorkspaceAvailable(section, state)) {
+    return false;
+  }
+  const config = optionalWorkspaces[section];
+  element.innerHTML = `
+    <div class="panel-heading">
+      <div>
+        <h2>${escapeHtml(config.title)}</h2>
+        <p>${escapeHtml(t("status.unavailable"))}</p>
+      </div>
+      ${badge(t("status.unavailable"), "warning")}
+    </div>
+    ${stateBlock(
+      "unavailable",
+      `${config.title} ${t("status.unavailable")}`,
+      `Backend module ${config.codes.join("/")} is not advertised by /api/v1/modules. The workspace is disabled until that module is available.`
+    )}
+  `;
+  return true;
+}
+
+function isWorkspaceAvailable(section, state = getState()) {
+  const config = optionalWorkspaces[section];
+  if (!config || !isModuleRegistryReady(state)) {
+    return true;
+  }
+  return config.codes.some((code) => state.modules.some((module) => module.code === code));
+}
+
+function isModuleRegistryReady(state = getState()) {
+  return !state.loading.has("system") && !state.errors.system && state.health !== null && Array.isArray(state.modules);
+}
+
 function renderTopHealth(state) {
   if (state.loading.has("system")) {
     elements.health.textContent = t("status.checking");
@@ -716,6 +806,31 @@ function renderTopHealth(state) {
   const ok = state.health?.status === "ok";
   elements.health.textContent = ok ? t("status.online") : t("status.issue");
   elements.health.className = ok ? "status ok" : "status issue";
+}
+
+function renderTopCustomerContext(state) {
+  if (!elements.topCustomer) {
+    return;
+  }
+  if (state.loading.has("profile") && !state.profile) {
+    elements.topCustomer.className = "customer-context pending";
+    elements.topCustomer.innerHTML = `<span>${escapeHtml(t("label.customer"))}</span><strong>${escapeHtml(t("status.loading"))}</strong>`;
+    return;
+  }
+  if (state.errors.profile) {
+    elements.topCustomer.className = "customer-context issue";
+    elements.topCustomer.innerHTML = `<span>${escapeHtml(t("label.customer"))}</span><strong>${escapeHtml(t("status.unavailable"))}</strong>`;
+    return;
+  }
+
+  const customer = state.profile?.customer;
+  const loyalty = state.profile?.loyalty_snapshot;
+  const title = customer ? `${customer.first_name} ${customer.last_name}` : state.customerId || t("empty.noData");
+  const detail = loyalty
+    ? `${loyalty.tier_name} / ${formatPercent(loyalty.discount_percent, state.locale)}`
+    : customer?.id || state.customerId || "-";
+  elements.topCustomer.className = customer ? "customer-context ok" : "customer-context";
+  elements.topCustomer.innerHTML = `<span>${escapeHtml(t("label.customer"))}</span><strong>${escapeHtml(title)}</strong><em>${escapeHtml(detail)}</em>`;
 }
 
 function renderModulesCompact(state) {

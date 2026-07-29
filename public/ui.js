@@ -80,7 +80,8 @@ export function errorBlock(error, title = "Request failed") {
     .map((detail) => `<li><code>${escapeHtml(detail.field || "body")}</code> ${escapeHtml(detail.reason || detail.message || "invalid")}</li>`)
     .join("");
   const detailsHtml = details ? `<ul>${details}</ul>` : "";
-  return `<div class="state-block error"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(error.message || error.code)}</p>${detailsHtml}</div>`;
+  const kind = error.status === 404 ? "unavailable" : "error";
+  return `<div class="state-block ${kind}"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(error.message || error.code)}</p>${detailsHtml}</div>`;
 }
 
 export function table(headers, rows, emptyText) {
@@ -88,9 +89,19 @@ export function table(headers, rows, emptyText) {
     return stateBlock("empty", emptyText, "");
   }
 
+  const labelledRows = rows.map((row) => addTableLabels(row, headers));
   return `<div class="table-wrap"><table><thead><tr>${headers
     .map((header) => `<th>${escapeHtml(header)}</th>`)
-    .join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+    .join("")}</tr></thead><tbody>${labelledRows.join("")}</tbody></table></div>`;
+}
+
+function addTableLabels(row, headers) {
+  let index = 0;
+  return row.replaceAll("<td>", () => {
+    const label = headers[index] || "";
+    index += 1;
+    return `<td data-label="${escapeHtml(label)}">`;
+  });
 }
 
 export function toIntlLocale(locale) {
