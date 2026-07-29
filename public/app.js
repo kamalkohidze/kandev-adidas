@@ -23,6 +23,11 @@ import {
   wireMarketingEvents
 } from "./marketing-analytics.js";
 import {
+  renderDeliveryWorkspace,
+  syncDeliveryLocale,
+  wireDeliveryEvents
+} from "./delivery-workspace.js";
+import {
   getState,
   setActiveSection,
   setCustomerContext,
@@ -47,7 +52,7 @@ import {
   table
 } from "./ui.js";
 
-const sections = ["overview", "customer", "catalog", "recommendations", "marketing", "campaigns", "pos", "promotions"];
+const sections = ["overview", "customer", "catalog", "recommendations", "marketing", "campaigns", "pos", "promotions", "delivery"];
 const storageKeyCoupon = "last-issued-coupon-code";
 const seedItems = [
   {
@@ -84,6 +89,7 @@ const localCopy = {
     "nav.campaigns": "Campaigns / Automation",
     "nav.posLoyalty": "POS/Адалдық",
     "nav.promotions": "Промо",
+    "nav.delivery": "Delivery / Messages",
     "overview.title": "Операциялық шолу",
     "overview.subtitle": "Backend API, модульдер және негізгі клиент деректері",
     "overview.health": "Backend",
@@ -183,6 +189,7 @@ const localCopy = {
     "nav.campaigns": "Campaigns / Automation",
     "nav.posLoyalty": "POS/Лояльность",
     "nav.promotions": "Promotions",
+    "nav.delivery": "Delivery / Messages",
     "overview.title": "Операционный обзор",
     "overview.subtitle": "Backend API, модули и ключевой клиентский контекст",
     "overview.health": "Backend",
@@ -282,6 +289,7 @@ const localCopy = {
     "nav.campaigns": "Campaigns / Automation",
     "nav.posLoyalty": "POS/Loyalty",
     "nav.promotions": "Promotions",
+    "nav.delivery": "Delivery / Messages",
     "overview.title": "Operations overview",
     "overview.subtitle": "Backend API, modules, and current customer context",
     "overview.health": "Backend",
@@ -383,7 +391,8 @@ const elements = {
   marketing: document.querySelector("#marketingPanel"),
   campaigns: document.querySelector("#campaignsPanel"),
   pos: document.querySelector("#posPanel"),
-  promotions: document.querySelector("#promotionsPanel")
+  promotions: document.querySelector("#promotionsPanel"),
+  delivery: document.querySelector("#deliveryPanel")
 };
 
 subscribe(render);
@@ -406,6 +415,7 @@ function wireEvents() {
   wireWorkspaceEvents();
   wireMarketingEvents();
   wireCampaignEvents();
+  wireDeliveryEvents();
 
   elements.refresh.addEventListener("click", () => refreshAll());
   elements.locale.addEventListener("change", async () => {
@@ -413,6 +423,7 @@ function wireEvents() {
     syncWorkspaceLocale(elements.locale.value);
     syncMarketingLocale(elements.locale.value);
     syncCampaignLocale(elements.locale.value);
+    syncDeliveryLocale(elements.locale.value);
     await loadDictionary();
     applyStaticLabels();
     await refreshAll();
@@ -682,6 +693,7 @@ function render(state = getState()) {
   renderCampaignBuilder(elements.campaigns, t);
   renderPos(state);
   renderPromotions(state);
+  renderDeliveryWorkspace(elements.delivery);
 }
 
 function renderNavigation(state) {
