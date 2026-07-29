@@ -1046,3 +1046,123 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+
+
+.badge.mint {
+  background: var(--mint);
+  color: var(--mint-ink);
+}
+
+.badge.coral {
+  background: var(--coral);
+  color: var(--coral-ink);
+}
+
+.badge.sky {
+  background: var(--sky);
+  color: var(--sky-ink);
+}
+
+.badge.lavender {
+  background: var(--lavender);
+  color: var(--lavender-ink);
+}
+
+.marketing-context,
+.segmented-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.marketing-context {
+  justify-content: flex-end;
+}
+
+.marketing-tabs {
+  margin-bottom: 16px;
+}
+
+.marketing-tabs .secondary[aria-selected="true"] {
+  border-color: #9dd5c6;
+  background: var(--mint);
+  color: var(--mint-ink);
+}
+
+.marketing-layout {
+  grid-template-columns: minmax(300px, 0.36fr) minmax(0, 1fr);
+}
+
+.marketing-cross-sell {
+  grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1fr) minmax(320px, 1fr);
+}
+
+.marketing-list {
+  display: grid;
+  gap: 10px;
+}
+
+.marketing-list-row {
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.45fr);
+}
+
+.marketing-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.marketing-result {
+  animation: panelIn 180ms ease both;
+}
+
+.criteria-panel {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.scenario-card.tone-0 {
+  background: linear-gradient(180deg, #fff, var(--mint) 220%);
+}
+
+.scenario-card.tone-1 {
+  background: linear-gradient(180deg, #fff, var(--sky) 220%);
+}
+
+.scenario-card.tone-2 {
+  background: linear-gradient(180deg, #fff, var(--coral) 220%);
+}
+
+.candidate-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.candidate-card {
+  background: linear-gradient(180deg, #fff, var(--lavender) 240%);
+}
+
+@media (max-width: 1120px) {
+  .marketing-layout,
+  .marketing-cross-sell,
+  .marketing-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .marketing-context {
+    justify-content: flex-start;
+  }
+
+  .marketing-tabs .secondary {
+    flex: 1 1 150px;
+  }
+
+  .marketing-list-row {
+    grid-template-columns: 1fr;
+  }
+}
