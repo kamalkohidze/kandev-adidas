@@ -1,5 +1,6 @@
 const listeners = new Set();
 const savedLocale = localStorage.getItem("admin-locale") || "ru";
+const defaultBranchId = "55555555-5555-4555-8555-555555555555";
 
 const state = {
   locale: savedLocale,
@@ -17,12 +18,47 @@ const state = {
     transaction: null,
     issuedCoupon: null,
     couponValidation: null,
-    redemption: null
+    redemption: null,
+    variantPrice: null,
+    variantInventory: null,
+    customerRecommendations: null,
+    segmentRecommendations: null
   },
   ui: {
     includeBlockedItem: false,
     promoSale: false,
     promoLoyalty: false
+  },
+  catalog: {
+    filters: {
+      query: "",
+      brand: "adidas",
+      product_type: "",
+      sport_tag: "",
+      status: "active",
+      branch_id: defaultBranchId,
+      size_system: "",
+      size_value: "",
+      in_stock: false,
+      locale: savedLocale,
+      at: ""
+    },
+    products: [],
+    page: null,
+    selectedProductId: null,
+    product: null,
+    variants: [],
+    selectedVariantId: null,
+    inventory: [],
+    inventoryInStock: true
+  },
+  recommendations: {
+    controls: {
+      branch_id: defaultBranchId,
+      limit: "10",
+      segment_code: "active",
+      locale: savedLocale
+    }
   }
 };
 
