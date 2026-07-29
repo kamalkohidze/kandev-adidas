@@ -9,6 +9,13 @@ import {
   wireWorkspaceEvents
 } from "./catalog-workspaces.js";
 import {
+  loadMarketingWorkspace,
+  refreshMarketingWorkspace,
+  renderMarketingWorkspace,
+  syncMarketingLocale,
+  wireMarketingEvents
+} from "./marketing-analytics.js";
+import {
   getState,
   setActiveSection,
   setCustomerContext,
@@ -33,7 +40,7 @@ import {
   table
 } from "./ui.js";
 
-const sections = ["overview", "customer", "catalog", "recommendations", "pos", "promotions"];
+const sections = ["overview", "customer", "catalog", "recommendations", "marketing", "pos", "promotions"];
 const storageKeyCoupon = "last-issued-coupon-code";
 const seedItems = [
   {
@@ -66,6 +73,7 @@ const localCopy = {
     "nav.customer360": "Клиент 360",
     "nav.catalog": "Каталог/Қойма",
     "nav.recommendations": "Ұсынымдар",
+    "nav.marketingAnalytics": "Сегменттер және өмірлік цикл",
     "nav.posLoyalty": "POS/Адалдық",
     "nav.promotions": "Промо",
     "overview.title": "Операциялық шолу",
@@ -163,6 +171,7 @@ const localCopy = {
     "nav.customer360": "Клиент 360",
     "nav.catalog": "Каталог/Склад",
     "nav.recommendations": "Рекомендации",
+    "nav.marketingAnalytics": "Сегменты и жизненный цикл",
     "nav.posLoyalty": "POS/Лояльность",
     "nav.promotions": "Promotions",
     "overview.title": "Операционный обзор",
@@ -260,6 +269,7 @@ const localCopy = {
     "nav.customer360": "Customer 360",
     "nav.catalog": "Catalog/Inventory",
     "nav.recommendations": "Recommendations",
+    "nav.marketingAnalytics": "Segments & Lifecycle",
     "nav.posLoyalty": "POS/Loyalty",
     "nav.promotions": "Promotions",
     "overview.title": "Operations overview",
@@ -360,6 +370,7 @@ const elements = {
   customer: document.querySelector("#customerPanel"),
   catalog: document.querySelector("#catalogPanel"),
   recommendations: document.querySelector("#recommendationsPanel"),
+  marketing: document.querySelector("#marketingPanel"),
   pos: document.querySelector("#posPanel"),
   promotions: document.querySelector("#promotionsPanel")
 };
@@ -374,7 +385,7 @@ async function boot() {
   applyStaticLabels();
   render();
   await Promise.all([loadSystem(), loadProfile()]);
-  await Promise.all([loadCatalogWorkspace(), refreshRecommendationWorkspace()]);
+  await Promise.all([loadCatalogWorkspace(), refreshRecommendationWorkspace(), loadMarketingWorkspace()]);
 }
 
 function wireEvents() {
@@ -382,11 +393,13 @@ function wireEvents() {
     button.addEventListener("click", () => setActiveSection(button.dataset.section));
   });
   wireWorkspaceEvents();
+  wireMarketingEvents();
 
   elements.refresh.addEventListener("click", () => refreshAll());
   elements.locale.addEventListener("change", async () => {
     setLocale(elements.locale.value);
     syncWorkspaceLocale(elements.locale.value);
+    syncMarketingLocale(elements.locale.value);
     await loadDictionary();
     applyStaticLabels();
     await refreshAll();
@@ -426,7 +439,7 @@ function wireEvents() {
 
 async function refreshAll() {
   await Promise.all([loadSystem(), loadProfile()]);
-  await Promise.all([refreshCatalogWorkspace(), refreshRecommendationWorkspace()]);
+  await Promise.all([refreshCatalogWorkspace(), refreshRecommendationWorkspace(), refreshMarketingWorkspace()]);
 }
 
 async function loadDictionary() {
@@ -652,6 +665,7 @@ function render(state = getState()) {
   renderCustomer(state);
   renderCatalogWorkspace(elements.catalog, t);
   renderRecommendationWorkspace(elements.recommendations, t);
+  renderMarketingWorkspace(elements.marketing, t);
   renderPos(state);
   renderPromotions(state);
 }
