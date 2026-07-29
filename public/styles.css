@@ -1166,3 +1166,178 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+
+
+textarea {
+  min-height: 180px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcff;
+  color: var(--ink);
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  resize: vertical;
+}
+
+.textarea-field {
+  align-content: start;
+}
+
+.campaign-tabs .secondary[aria-selected="true"] {
+  border-color: #acd3f3;
+  background: var(--sky);
+  color: var(--sky-ink);
+}
+
+#campaignsPanel .marketing-context .badge,
+.campaign-view .badge {
+  border-radius: 8px;
+}
+
+.campaign-layout {
+  grid-template-columns: minmax(280px, 0.34fr) minmax(0, 1fr);
+}
+
+.campaign-two,
+.campaign-content-layout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.campaign-instance-grid {
+  grid-template-columns: minmax(240px, 0.7fr) minmax(260px, 1fr);
+}
+
+.campaign-dry-grid,
+.campaign-content-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.campaign-dry-grid .textarea-field,
+.campaign-content-form .textarea-field,
+.campaign-dry-grid button,
+.campaign-content-form button {
+  grid-column: 1 / -1;
+}
+
+.campaign-card-grid,
+.campaign-event-stack,
+.campaign-template-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.campaign-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.campaign-mini-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.campaign-mini-card h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.campaign-mini-card strong,
+.campaign-mini-card span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.campaign-result {
+  animation: panelIn 180ms ease both;
+}
+
+.campaign-json-panel {
+  margin-top: 12px;
+}
+
+.campaign-json-panel summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.json-panel {
+  max-height: 420px;
+  margin: 8px 0 0;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f9fc;
+  color: #253144;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.campaign-body {
+  max-height: 220px;
+  background: #fff;
+}
+
+.campaign-toast {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--mint);
+  color: var(--mint-ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.campaign-toast.warning {
+  background: var(--warning);
+  color: var(--warning-ink);
+}
+
+.campaign-summary {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.muted-panel {
+  opacity: 0.58;
+}
+
+.muted-panel textarea {
+  background: #f4f6f8;
+}
+
+@media (max-width: 1120px) {
+  .campaign-layout,
+  .campaign-two,
+  .campaign-content-layout,
+  .campaign-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .campaign-dry-grid,
+  .campaign-content-form,
+  .campaign-instance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-tabs .secondary {
+    flex: 1 1 150px;
+  }
+
+  textarea {
+    min-height: 150px;
+  }
+}

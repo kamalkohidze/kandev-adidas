@@ -1,5 +1,12 @@
 import { ApiError, apiRequest } from "./api.js";
 import {
+  loadCampaignBuilder,
+  refreshCampaignBuilder,
+  renderCampaignBuilder,
+  syncCampaignLocale,
+  wireCampaignEvents
+} from "./campaign-builder.js";
+import {
   loadCatalogWorkspace,
   refreshCatalogWorkspace,
   refreshRecommendationWorkspace,
@@ -40,7 +47,7 @@ import {
   table
 } from "./ui.js";
 
-const sections = ["overview", "customer", "catalog", "recommendations", "marketing", "pos", "promotions"];
+const sections = ["overview", "customer", "catalog", "recommendations", "marketing", "campaigns", "pos", "promotions"];
 const storageKeyCoupon = "last-issued-coupon-code";
 const seedItems = [
   {
@@ -74,6 +81,7 @@ const localCopy = {
     "nav.catalog": "Каталог/Қойма",
     "nav.recommendations": "Ұсынымдар",
     "nav.marketingAnalytics": "Сегменттер және өмірлік цикл",
+    "nav.campaigns": "Campaigns / Automation",
     "nav.posLoyalty": "POS/Адалдық",
     "nav.promotions": "Промо",
     "overview.title": "Операциялық шолу",
@@ -172,6 +180,7 @@ const localCopy = {
     "nav.catalog": "Каталог/Склад",
     "nav.recommendations": "Рекомендации",
     "nav.marketingAnalytics": "Сегменты и жизненный цикл",
+    "nav.campaigns": "Campaigns / Automation",
     "nav.posLoyalty": "POS/Лояльность",
     "nav.promotions": "Promotions",
     "overview.title": "Операционный обзор",
@@ -270,6 +279,7 @@ const localCopy = {
     "nav.catalog": "Catalog/Inventory",
     "nav.recommendations": "Recommendations",
     "nav.marketingAnalytics": "Segments & Lifecycle",
+    "nav.campaigns": "Campaigns / Automation",
     "nav.posLoyalty": "POS/Loyalty",
     "nav.promotions": "Promotions",
     "overview.title": "Operations overview",
@@ -371,6 +381,7 @@ const elements = {
   catalog: document.querySelector("#catalogPanel"),
   recommendations: document.querySelector("#recommendationsPanel"),
   marketing: document.querySelector("#marketingPanel"),
+  campaigns: document.querySelector("#campaignsPanel"),
   pos: document.querySelector("#posPanel"),
   promotions: document.querySelector("#promotionsPanel")
 };
@@ -385,7 +396,7 @@ async function boot() {
   applyStaticLabels();
   render();
   await Promise.all([loadSystem(), loadProfile()]);
-  await Promise.all([loadCatalogWorkspace(), refreshRecommendationWorkspace(), loadMarketingWorkspace()]);
+  await Promise.all([loadCatalogWorkspace(), refreshRecommendationWorkspace(), loadMarketingWorkspace(), loadCampaignBuilder()]);
 }
 
 function wireEvents() {
@@ -394,12 +405,14 @@ function wireEvents() {
   });
   wireWorkspaceEvents();
   wireMarketingEvents();
+  wireCampaignEvents();
 
   elements.refresh.addEventListener("click", () => refreshAll());
   elements.locale.addEventListener("change", async () => {
     setLocale(elements.locale.value);
     syncWorkspaceLocale(elements.locale.value);
     syncMarketingLocale(elements.locale.value);
+    syncCampaignLocale(elements.locale.value);
     await loadDictionary();
     applyStaticLabels();
     await refreshAll();
@@ -439,7 +452,7 @@ function wireEvents() {
 
 async function refreshAll() {
   await Promise.all([loadSystem(), loadProfile()]);
-  await Promise.all([refreshCatalogWorkspace(), refreshRecommendationWorkspace(), refreshMarketingWorkspace()]);
+  await Promise.all([refreshCatalogWorkspace(), refreshRecommendationWorkspace(), refreshMarketingWorkspace(), refreshCampaignBuilder()]);
 }
 
 async function loadDictionary() {
@@ -666,6 +679,7 @@ function render(state = getState()) {
   renderCatalogWorkspace(elements.catalog, t);
   renderRecommendationWorkspace(elements.recommendations, t);
   renderMarketingWorkspace(elements.marketing, t);
+  renderCampaignBuilder(elements.campaigns, t);
   renderPos(state);
   renderPromotions(state);
 }
