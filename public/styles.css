@@ -71,6 +71,14 @@ button:disabled {
   opacity: 0.68;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgb(36 98 141 / 28%);
+  outline-offset: 2px;
+}
+
 input,
 select {
   min-height: 38px;
@@ -424,6 +432,7 @@ th,
 td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
   text-align: left;
   vertical-align: top;
   font-size: 13px;
@@ -1339,5 +1348,56 @@ textarea {
 
   textarea {
     min-height: 150px;
+  }
+}
+
+.delivery-layout {
+  align-items: start;
+}
+
+.delivery-card {
+  background: linear-gradient(180deg, #fff 0, #fbfcff 100%);
+}
+
+.delivery-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.delivery-form .textarea-field,
+.delivery-form .check-row,
+.delivery-form button {
+  grid-column: 1 / -1;
+}
+
+.compact-delivery-form {
+  grid-template-columns: minmax(120px, 0.45fr) minmax(160px, 1fr);
+}
+
+.compact-delivery-form button {
+  grid-column: auto;
+  align-self: end;
+}
+
+.delivery-result {
+  animation: panelIn 180ms ease both;
+}
+
+.delivery-result .mini-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.delivery-result .metric strong {
+  font-size: 15px;
+}
+
+@media (max-width: 1120px) {
+  .delivery-form,
+  .compact-delivery-form,
+  .delivery-result .mini-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-delivery-form button {
+    grid-column: 1 / -1;
   }
 }
